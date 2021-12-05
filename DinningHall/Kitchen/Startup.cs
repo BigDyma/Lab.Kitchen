@@ -28,7 +28,7 @@ namespace Kitchen
         {
             services.AddSingleton<IRequestService, RequestService>();
             services.AddSingleton<IKitchenService, KitchenService>();
-            services.AddHostedService<DinningContext>();
+            services.AddHostedService<KitchenContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

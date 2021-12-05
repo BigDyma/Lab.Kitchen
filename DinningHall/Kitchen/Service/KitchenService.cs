@@ -10,8 +10,7 @@ using Kitchen.Models;
 
 namespace Kitchen.Service
 {
-
-    public class KitchenService : IKitchenService
+    public class KitchenService : BackgroundService, IKitchenService
     {
         private readonly IBaseRepository _baseRepository;
 
@@ -23,7 +22,6 @@ namespace Kitchen.Service
         {
             _server = server;
             this._baseRepository = baseRepository;
-            StartWork().GetAwaiter().GetResult();
         }
         public void ReceiveOrder(Order order)
         {
@@ -33,8 +31,6 @@ namespace Kitchen.Service
 
         public async Task StartWork()
         {
-            for (;;)
-            {
                 var Cooks = _baseRepository.GetCooks();
                 var orders = _baseRepository.GetReadyOrders();
                 await Task.Run(() =>
@@ -47,34 +43,38 @@ namespace Kitchen.Service
 
                             Parallel.ForEach(orders, body: (order) =>
                             {
-                                foreach (var food in order.RealItems.Where(food => food.Complexity <= cook.Rank))
-                                {
-                                    mutex.WaitOne();
-                                    var apparatus = _baseRepository.GetAvailableApparatus(food);
-                                    if (food.State == KitchenFoodState.NotStarted && apparatus is object)
+                                    foreach (var food in order.RealItems.Where(food => food.Complexity <= cook.Rank))
                                     {
-                                        apparatus.Busy = true;
-                                        _baseRepository.UpdateApparatus(apparatus);
-
-                                        Console.WriteLine($"Cooking apparatus was locked by {food.Name}");
-                                        food.State = KitchenFoodState.Preparing;
-                                        _baseRepository.UpdateKitchenFoodState(food, order);
-                                        mutex.ReleaseMutex();
-                                        _baseRepository.Prepare(food, apparatus, order);
-                                        if (order.IsReady)
+                                        var apparatus = _baseRepository.GetAvailableApparatus(food);
+                                        if (food.State == KitchenFoodState.NotStarted && apparatus is object)
                                         {
-                                            Console.WriteLine($"Order {order.Id} is ready ");
-                                            _server.SendReadyOrder(order).GetAwaiter().GetResult();
+                                            apparatus.Busy = true;
+                                            _baseRepository.UpdateApparatus(apparatus);
+
+                                            Console.WriteLine($"Cooking apparatus was locked by {food.Name}");
+                                            food.State = KitchenFoodState.Preparing;
+                                            _baseRepository.UpdateKitchenFoodState(food, order);
+                                            _baseRepository.Prepare(food, apparatus, order);
+                                            if (order.IsReady)
+                                            {
+                                                Console.WriteLine($"Order {order.Id} is ready ");
+                                                _server.SendReadyOrder(order).GetAwaiter().GetResult();
+                                            }
                                         }
                                     }
-                                    else
-                                        mutex.ReleaseMutex();
-                                }
                             });
                         }
                     }
                 });
             }
+        
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _baseRepository.InitContext();
+            StartWork().GetAwaiter().GetResult();
+            return Task.CompletedTask;
         }
+        }
+
     }
-}
+

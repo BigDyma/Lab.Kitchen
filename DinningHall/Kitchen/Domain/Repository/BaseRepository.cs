@@ -10,22 +10,27 @@ namespace Kitchen.Domain.Repository
 {
     public class BaseRepository : IBaseRepository
     {
-        private DinningContext dinningContext { get; }
+        private KitchenContext _kitchenContext { get; }
 
-        public BaseRepository(DinningContext dinningContext)
+        public BaseRepository(KitchenContext kitchenContext)
         {
-            this.dinningContext = dinningContext;
+            this._kitchenContext = kitchenContext;
+        }
+
+        public void InitContext()
+        {
+            _kitchenContext.InitContext();
         }
         //
 
         public List<Order> GetOrders()
         {
-            return dinningContext.Orders;
+            return _kitchenContext.Orders;
         }
 
         public List<Order> GetReadyOrders()
         {
-            return dinningContext.Orders.Where(x => x.IsReady).ToList();
+            return _kitchenContext.Orders.Where(x => x.IsReady).ToList();
         }
 
         public CookingApparatus GetAvailableApparatus(KitchenFood food)
@@ -36,7 +41,7 @@ namespace Kitchen.Domain.Repository
                 
             }
 
-            return dinningContext.CookingApparatuses.FirstOrDefault(ck => food.CookingApparatusType == ck.Type);
+            return _kitchenContext.CookingApparatuses.FirstOrDefault(ck => food.CookingApparatusType == ck.Type);
         }
 
         public void Prepare(KitchenFood food, CookingApparatus apparatus, Order order)
@@ -51,7 +56,7 @@ namespace Kitchen.Domain.Repository
 
         public KitchenFood UpdateKitchenFoodState(KitchenFood food, Order order)
         {
-            dinningContext.Orders.FirstOrDefault(x => x.Id == order.Id)?.RealItems
+            _kitchenContext.Orders.FirstOrDefault(x => x.Id == order.Id)?.RealItems
                 .Where(x => x.Id == food.Id)
                 .ToList()
                 .ForEach(x => x =food);
@@ -62,7 +67,7 @@ namespace Kitchen.Domain.Repository
 
         public List<Food> GetMenu()
         {
-            return dinningContext.Menu;
+            return _kitchenContext.Menu;
         }
         
         
@@ -70,20 +75,20 @@ namespace Kitchen.Domain.Repository
         {
             var menu = GetMenu();
             order.Items.ForEach((food) => order.RealItems.Add(new KitchenFood(menu.FirstOrDefault(x => x.Id == food))));
-            dinningContext.Orders.Add(order);
+            _kitchenContext.Orders.Add(order);
 
-            return dinningContext.Orders;
+            return _kitchenContext.Orders;
         }
 
 
         public List<Cook> GetCooks()
         {
-            return dinningContext.Cooks;
+            return _kitchenContext.Cooks;
         }
 
         public CookingApparatus UpdateApparatus(CookingApparatus apparatus)
         {
-            dinningContext.CookingApparatuses.Where(x => x.Id == apparatus.Id).ToList().ForEach(x => x = apparatus);
+            _kitchenContext.CookingApparatuses.Where(x => x.Id == apparatus.Id).ToList().ForEach(x => x = apparatus);
             return apparatus;
         }
     }

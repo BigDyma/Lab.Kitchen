@@ -18,5 +18,6 @@ namespace Kitchen.Domain.Repository
 
         List<Cook> GetCooks();
         CookingApparatus UpdateApparatus(CookingApparatus apparatus);
+        void InitContext();
     }
 }
