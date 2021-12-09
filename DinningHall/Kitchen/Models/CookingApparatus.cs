@@ -5,5 +5,9 @@
         public CookingApparatusType Type { get; set; }
         
         public bool Busy { get; set; }
+        public CookingApparatus(): base()
+        {
+
+        }
     }
 }

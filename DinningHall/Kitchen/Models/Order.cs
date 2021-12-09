@@ -7,7 +7,7 @@ namespace Kitchen.Models
 {
     public class Order : BaseEntity
     {
-        public List<Guid> Items { get; set; }
+        public List<Food> Items { get; set; }
         public int Priority { get; set; }
         public float MaxWaitTime { get; set; }
         public Guid TableId { get; set; }
@@ -20,16 +20,22 @@ namespace Kitchen.Models
         {
             get
             {
-                bool ready = true;
+                bool ready = !(RealItems is null);
+               
                 RealItems.ForEach(x =>
                 {
                     ready = x.State == KitchenFoodState.Ready;
                 });
+
                 return ready;
             }
             
         }
 
+        public Order(): base()
+        {
+            RealItems = new List<KitchenFood>();
+        }
 
     }
 }

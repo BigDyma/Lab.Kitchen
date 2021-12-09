@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Kitchen.Service;
+using Kitchen.Domain.Repository;
+using DinningHall.Service;
 
 namespace Kitchen
 {
@@ -26,9 +28,14 @@ namespace Kitchen
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddControllers();
             services.AddSingleton<IRequestService, RequestService>();
             services.AddSingleton<IKitchenService, KitchenService>();
-            services.AddHostedService<KitchenContext>();
+            services.AddSingleton<IBaseRepository>( new BaseRepository(new KitchenContext()));
+
+            services.AddHealthChecks();
+
+            services.AddHostedService<KitchenWorker>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,8 +50,6 @@ namespace Kitchen
 
             app.UseRouting();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

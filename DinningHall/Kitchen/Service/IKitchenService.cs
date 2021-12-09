@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Kitchen.Models;
+using System.Threading;
 
 namespace Kitchen.Service
 {
@@ -10,5 +11,6 @@ namespace Kitchen.Service
     {
         Task StartWork();
         void ReceiveOrder(Order order);
+        Task StartWork(CancellationToken stoppingToken);
     }
 }

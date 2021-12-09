@@ -17,79 +17,78 @@ namespace Kitchen.Domain.Repository
             this._kitchenContext = kitchenContext;
         }
 
-        public void InitContext()
+        public async Task InitContext()
         {
-            _kitchenContext.InitContext();
-        }
-        //
-
-        public List<Order> GetOrders()
-        {
-            return _kitchenContext.Orders;
+             await _kitchenContext.InitContext();
         }
 
-        public List<Order> GetReadyOrders()
+        public async Task<List<Order>> GetOrders()
         {
-            return _kitchenContext.Orders.Where(x => x.IsReady).ToList();
+            return await Task.FromResult(_kitchenContext.Orders);
         }
 
-        public CookingApparatus GetAvailableApparatus(KitchenFood food)
+        public async Task<List<Order>> GetReadyOrders()
         {
-            if (food.CookingApparatus is null)
-            {
-                return null;
-                
-            }
-
-            return _kitchenContext.CookingApparatuses.FirstOrDefault(ck => food.CookingApparatusType == ck.Type);
+           return await Task.Run(() => _kitchenContext.Orders?.Where(x => x.IsReady).ToList());
         }
 
-        public void Prepare(KitchenFood food, CookingApparatus apparatus, Order order)
+        public async Task<CookingApparatus> GetAvailableApparatus(KitchenFood food)
+        {
+            return await Task.Run(() => _kitchenContext.CookingApparatuses?.FirstOrDefault(ck => food.CookingApparatusType == ck.Type));
+        }
+
+        public async Task Prepare(KitchenFood food, CookingApparatus apparatus, Order order)
         {
             Console.WriteLine($"Cook {food.Id} started preparing food {food.Name}.");
             Thread.Sleep(food.PreparationTime * 5);
             food.State = KitchenFoodState.Ready;
-            UpdateKitchenFoodState(food, order);
-            
+            await UpdateKitchenFoodState(food, order);
             
         }
 
-        public KitchenFood UpdateKitchenFoodState(KitchenFood food, Order order)
+        public async Task<KitchenFood> UpdateKitchenFoodState(KitchenFood food, Order order)
         {
             _kitchenContext.Orders.FirstOrDefault(x => x.Id == order.Id)?.RealItems
                 .Where(x => x.Id == food.Id)
                 .ToList()
                 .ForEach(x => x =food);
 
-            return food;
+            return  await Task.FromResult(food);
 
         }
 
-        public List<Food> GetMenu()
+        public Task<List<Food>> GetMenu()
         {
-            return _kitchenContext.Menu;
+            return Task.FromResult(_kitchenContext.Menu);
         }
         
         
-        public List<Order> AddOrder(Order order)
+        public async Task<List<Order>> AddOrder(Order order)
         {
-            var menu = GetMenu();
-            order.Items.ForEach((food) => order.RealItems.Add(new KitchenFood(menu.FirstOrDefault(x => x.Id == food))));
-            _kitchenContext.Orders.Add(order);
 
-            return _kitchenContext.Orders;
+                var menu = await GetMenu();
+
+                foreach (var food in order.Items)
+                {
+                    var kitchenFood = new KitchenFood(menu.FirstOrDefault(x => x.Name == food.Name));
+                    order.RealItems.Add(kitchenFood);
+                }
+
+                _kitchenContext.Orders.Add(order);
+
+            return await Task.FromResult(_kitchenContext.Orders);
         }
 
 
-        public List<Cook> GetCooks()
+        public async Task<List<Cook>> GetCooks()
         {
-            return _kitchenContext.Cooks;
+            return await Task.FromResult(_kitchenContext.Cooks);
         }
 
-        public CookingApparatus UpdateApparatus(CookingApparatus apparatus)
+        public async Task<CookingApparatus> UpdateApparatus(CookingApparatus apparatus)
         {
-            _kitchenContext.CookingApparatuses.Where(x => x.Id == apparatus.Id).ToList().ForEach(x => x = apparatus);
-            return apparatus;
+            await Task.Run (() => _kitchenContext.CookingApparatuses.Where(x => x.Id == apparatus.Id).ToList().ForEach(x => x = apparatus));
+            return await Task.FromResult(apparatus);
         }
     }
  }

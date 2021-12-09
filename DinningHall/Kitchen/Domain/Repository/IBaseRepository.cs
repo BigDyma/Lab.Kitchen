@@ -6,18 +6,18 @@ namespace Kitchen.Domain.Repository
 {
     public interface IBaseRepository
     {
-        List<Order> GetOrders();
-        List<Order> GetReadyOrders();
-        CookingApparatus GetAvailableApparatus(KitchenFood food);
+        Task<List<Order>> GetOrders();
+        Task<List<Order>> GetReadyOrders();
+        Task<CookingApparatus> GetAvailableApparatus(KitchenFood food);
 
-        void Prepare(KitchenFood food, CookingApparatus apparatus, Order order);
-        List<Food> GetMenu();
-        KitchenFood UpdateKitchenFoodState(KitchenFood food, Order order);
+        Task Prepare(KitchenFood food, CookingApparatus apparatus, Order order);
+        Task<List<Food>> GetMenu();
+        Task<KitchenFood> UpdateKitchenFoodState(KitchenFood food, Order order);
 
-        List<Order> AddOrder(Order order);
+        Task<List<Order>> AddOrder(Order order);
 
-        List<Cook> GetCooks();
-        CookingApparatus UpdateApparatus(CookingApparatus apparatus);
-        void InitContext();
+        Task<List<Cook>> GetCooks();
+        Task<CookingApparatus> UpdateApparatus(CookingApparatus apparatus);
+        Task InitContext();
     }
 }

@@ -7,21 +7,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Kitchen.Domain.Repository;
 using Kitchen.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Kitchen.Service
 {
-    public class KitchenService : BackgroundService, IKitchenService
+    public class KitchenService : IKitchenService
     {
         private readonly IBaseRepository _baseRepository;
 
         private readonly IRequestService _server;
 
-        private static Mutex mutex = new Mutex();
+        private readonly ILogger<KitchenService> _logger;
 
-        public KitchenService(IRequestService server, IBaseRepository baseRepository)
+        public KitchenService(IRequestService server, IBaseRepository baseRepository, ILogger<KitchenService> logger)
         {
             _server = server;
             this._baseRepository = baseRepository;
+            _logger = logger;
         }
         public void ReceiveOrder(Order order)
         {
@@ -31,48 +33,58 @@ namespace Kitchen.Service
 
         public async Task StartWork()
         {
-                var Cooks = _baseRepository.GetCooks();
-                var orders = _baseRepository.GetReadyOrders();
-                await Task.Run(() =>
+            
+
+            var Cooks = await _baseRepository.GetCooks();
+                var orders = await _baseRepository.GetOrders();
+                await Task.Run(async () =>
                 {
                     foreach (var cook in Cooks)
                     {
                         for (int i = 0; i < cook.Proficiency; i++)
                         {
-                            Thread.Sleep(100);
-
-                            Parallel.ForEach(orders, body: (order) =>
+                            if (orders is object)
                             {
-                                    foreach (var food in order.RealItems.Where(food => food.Complexity <= cook.Rank))
+                                //Parallel.ForEach(orders, body: (order) =>
+                                //{
+                                foreach (var order in orders)
+                                { 
+                                    if (!order.IsReady)
+                                        foreach (var food in order.RealItems.Where(food => food.Complexity <= cook.Rank))
                                     {
-                                        var apparatus = _baseRepository.GetAvailableApparatus(food);
+                                        var apparatus = await _baseRepository.GetAvailableApparatus(food);
                                         if (food.State == KitchenFoodState.NotStarted && apparatus is object)
                                         {
                                             apparatus.Busy = true;
-                                            _baseRepository.UpdateApparatus(apparatus);
+                                            await _baseRepository.UpdateApparatus(apparatus);
 
                                             Console.WriteLine($"Cooking apparatus was locked by {food.Name}");
                                             food.State = KitchenFoodState.Preparing;
-                                            _baseRepository.UpdateKitchenFoodState(food, order);
-                                            _baseRepository.Prepare(food, apparatus, order);
+                                            await _baseRepository.UpdateKitchenFoodState(food, order);
+                                            await  _baseRepository.Prepare(food, apparatus, order);
                                             if (order.IsReady)
                                             {
                                                 Console.WriteLine($"Order {order.Id} is ready ");
-                                                _server.SendReadyOrder(order).GetAwaiter().GetResult();
+                                                await _server.SendReadyOrder(order).ConfigureAwait(false);
                                             }
                                         }
                                     }
-                            });
+                                }
+                                    //}
+                                //);
+                            }
                         }
                     }
                 });
             }
         
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        public async Task StartWork(CancellationToken cancellationToken)
         {
-            _baseRepository.InitContext();
-            StartWork().GetAwaiter().GetResult();
-            return Task.CompletedTask;
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await StartWork();
+                await Task.Delay(1000);
+            }
         }
         }
 
