@@ -12,6 +12,7 @@ namespace DinningHall.Service
     public class KitchenWorker : BackgroundService
     {
         private readonly IKitchenService _kitchenService;
+
         private readonly ILogger<KitchenWorker> logger;
 
         public KitchenWorker(IKitchenService kitchenService, ILogger<KitchenWorker> logger)
