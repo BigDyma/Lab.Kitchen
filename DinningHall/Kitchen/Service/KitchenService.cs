@@ -37,7 +37,7 @@ namespace Kitchen.Service
 
             var Cooks = await _baseRepository.GetCooks();
                 var orders = await _baseRepository.GetOrders();
-                await Task.Run(async () =>
+                await Task.Run( () =>
                 {
                     foreach (var cook in Cooks)
                     {
@@ -45,10 +45,10 @@ namespace Kitchen.Service
                         {
                             if (orders is object)
                             {
-                                //Parallel.ForEach(orders, body: (order) =>
-                                //{
-                                foreach (var order in orders)
-                                { 
+                                Parallel.ForEach(orders, body: async (order) =>
+                                {
+                                //foreach (var order in orders)
+                                //{ 
                                     if (!order.IsReady)
                                         foreach (var food in order.RealItems.Where(food => food.Complexity <= cook.Rank))
                                     {
@@ -69,9 +69,9 @@ namespace Kitchen.Service
                                             }
                                         }
                                     }
-                                }
-                                    //}
-                                //);
+                                //}
+                                    }
+                                );
                             }
                         }
                     }
