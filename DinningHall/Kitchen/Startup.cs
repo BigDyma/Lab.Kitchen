@@ -47,7 +47,7 @@ namespace Kitchen
                 .AllowAnyHeader());
 
             app.UseHttpsRedirection();
-
+            app.UseMiddleware<HandleExceptionsMiddleware>();
             app.UseRouting();
 
 
