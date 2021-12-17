@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DinningHall.Service;
 using Kitchen.Models;
 using Kitchen.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -24,17 +25,8 @@ namespace Kitchen.Controllers
         [HttpPost("Order")]
         public  async Task<IActionResult >ReceiveOrder(Order order)
         {
-            if (order is null)
-                return BadRequest();
-
-            _kitchenService.ReceiveOrder(order);
-            return await Task.Run(() => Ok());
-        }
-        
-        [HttpPost("Kitchen/closed")]
-        public  void Stop()
-        {
-            System.Environment.Exit(1);
+            await _kitchenService.ReceiveOrder(order);
+            return  Ok();
         }
     }
 }

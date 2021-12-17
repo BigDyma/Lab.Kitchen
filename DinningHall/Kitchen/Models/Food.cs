@@ -18,8 +18,6 @@ namespace Kitchen.Models
         
         public CookingApparatusType? CookingApparatusType => SetCookingApparatus();
         
-        public CookingApparatus CookingApparatus { get; set; }
-        
         private CookingApparatusType? SetCookingApparatus()
         {
             if (CookingApparatusTypeName == "oven")

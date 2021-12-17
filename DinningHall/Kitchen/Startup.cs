@@ -30,10 +30,12 @@ namespace Kitchen
         {
             services.AddControllers();
             services.AddSingleton<IRequestService, RequestService>();
+            services.AddSingleton<ICookService, CookService>();
             services.AddSingleton<IKitchenService, KitchenService>();
+            
             services.AddSingleton<IBaseRepository>( new BaseRepository(new KitchenContext()));
 
-            services.AddHealthChecks();
+           // services.AddHealthChecks();
 
             services.AddHostedService<KitchenWorker>();
         }
@@ -47,7 +49,7 @@ namespace Kitchen
                 .AllowAnyHeader());
 
             app.UseHttpsRedirection();
-            app.UseMiddleware<HandleExceptionsMiddleware>();
+            //app.UseMiddleware<HandleExceptionsMiddleware>();
             app.UseRouting();
 
 

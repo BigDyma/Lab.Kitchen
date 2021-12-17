@@ -12,6 +12,8 @@ namespace Kitchen.Domain.Repository
     {
         private KitchenContext _kitchenContext { get; }
 
+        private SemaphoreLocker _locker = new SemaphoreLocker();
+
         public BaseRepository(KitchenContext kitchenContext)
         {
             this._kitchenContext = kitchenContext;
@@ -22,24 +24,41 @@ namespace Kitchen.Domain.Repository
              await _kitchenContext.InitContext();
         }
 
+        public async  Task<List<Order>> GetNotReadyOrders()
+        {
+            var orders = await GetOrders().ConfigureAwait(false);
+            return orders.Where(x => x.IsReady == false).ToList();
+        }
+
         public async Task<List<Order>> GetOrders()
         {
-            return await Task.FromResult(_kitchenContext.Orders);
+            return  await Task.FromResult(_kitchenContext.Orders);
         }
 
         public async Task<List<Order>> GetReadyOrders()
         {
-           return await Task.Run(() => _kitchenContext.Orders?.Where(x => x.IsReady).ToList());
+
+            var allOrders = await GetOrders();
+
+            return allOrders.Where(x => x.IsReady).ToList();
         }
 
         public async Task<CookingApparatus> GetAvailableApparatus(KitchenFood food)
         {
-            return await Task.Run(() => _kitchenContext.CookingApparatuses?.FirstOrDefault(ck => food.CookingApparatusType == ck.Type));
+            var allApparatuses = await GetAllCoookingApparatus();
+
+            return allApparatuses.FirstOrDefault(ck => food.CookingApparatusType == ck.Type);
         }
 
-        public async Task Prepare(KitchenFood food, CookingApparatus apparatus, Order order)
+        public async Task<List<CookingApparatus>> GetAllCoookingApparatus()
         {
-            Console.WriteLine($"Cook {food.Id} started preparing food {food.Name}.");
+         //   return await _locker.LockAsync(() => 
+         return await Task.FromResult(_kitchenContext.CookingApparatuses);
+         //);
+        }
+        public async Task Prepare(KitchenFood food, CookingApparatus apparatus, Order order, Cook cook)
+        {
+            Console.WriteLine($"Cook {cook.Name}  started preparing food {food.Name}.");
             Thread.Sleep(food.PreparationTime * 5);
             food.State = KitchenFoodState.Ready;
             await UpdateKitchenFoodState(food, order);
@@ -48,25 +67,30 @@ namespace Kitchen.Domain.Repository
 
         public async Task<KitchenFood> UpdateKitchenFoodState(KitchenFood food, Order order)
         {
-            _kitchenContext.Orders.FirstOrDefault(x => x.Id == order.Id)?.RealItems
-                .Where(x => x.Id == food.Id)
-                .ToList()
-                .ForEach(x => x =food);
 
-            return  await Task.FromResult(food);
-
+                await Task.Run(() =>
+                {
+                    _kitchenContext.Orders.FirstOrDefault(x => x.Id == order.Id)?.RealItems
+                        .Where(x => x.Id == food.Id)
+                        .ToList()
+                        .ForEach(x => x = food);
+                    return Task.CompletedTask;
+                });
+                return food;
         }
 
-        public Task<List<Food>> GetMenu()
+        public async Task<List<Food>> GetMenu()
         {
-            return Task.FromResult(_kitchenContext.Menu);
+           // return await _locker.LockAsync(() =>
+            // {
+                return await Task.FromResult(_kitchenContext.Menu);
+            // });
         }
         
         
         public async Task<List<Order>> AddOrder(Order order)
         {
-
-                var menu = await GetMenu();
+            var menu = await GetMenu();
 
                 foreach (var food in order.Items)
                 {
@@ -74,20 +98,36 @@ namespace Kitchen.Domain.Repository
                     order.RealItems.Add(kitchenFood);
                 }
 
-                _kitchenContext.Orders.Add(order);
+               await AddOrderInternal(order);
 
-            return await Task.FromResult(_kitchenContext.Orders);
+            return await GetOrders();
+        }
+
+        private   Task AddOrderInternal(Order order)
+        {
+            // await _locker.LockAsync(async () =>
+            _kitchenContext.Orders.Add(order);
+
+            return  Task.CompletedTask;
+            // );
         }
 
 
         public async Task<List<Cook>> GetCooks()
         {
-            return await Task.FromResult(_kitchenContext.Cooks);
+           // return await _locker.LockAsync(async () =>
+          return await Task.FromResult(_kitchenContext.Cooks);
+           //);
         }
 
         public async Task<CookingApparatus> UpdateApparatus(CookingApparatus apparatus)
         {
-            await Task.Run (() => _kitchenContext.CookingApparatuses.Where(x => x.Id == apparatus.Id).ToList().ForEach(x => x = apparatus));
+
+           // await _locker.LockAsync (async () => 
+           await Task.Run(() =>
+               _kitchenContext.CookingApparatuses.Where(x => x.Id == apparatus.Id).ToList()
+                   .ForEach(x => x = apparatus));
+                //);
             return await Task.FromResult(apparatus);
         }
     }

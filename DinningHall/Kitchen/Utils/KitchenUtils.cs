@@ -131,23 +131,30 @@ namespace Kitchen.Utils
                 {
 
                     Rank = 1,
-                    Proficiency = 1,
+                    Proficiency = 2,
                     Name = "Zubenko Mikhael Petrovich",
                     CatchPhrase = "Mafioznik"
                 },
                 new Cook
                 {
                     Rank = 2,
-                    Proficiency = 3,
+                    Proficiency = 2,
                     Name = "Allakh",
                     CatchPhrase = "Gde detonator ?"
                 },
                 new Cook
                 {
-                    Rank = 3,
-                    Proficiency = 4,
+                    Rank = 2,
+                    Proficiency = 3,
                     Name = "San Sanych",
                     CatchPhrase = "Byli by vy chelovekom, uvazhaemyi afroamerikanets"
+                },
+                new Cook
+                {
+                    Rank = 3,
+                    Proficiency = 4,
+                    Name = "San Another sanych",
+                    CatchPhrase = "Byli by vy chelovekom, uvazhaemyi chelovek"
                 }
             };
             result.Sort((o1,o2) => o1.Proficiency - o2.Proficiency);

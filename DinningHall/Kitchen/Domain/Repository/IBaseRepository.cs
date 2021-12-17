@@ -10,7 +10,7 @@ namespace Kitchen.Domain.Repository
         Task<List<Order>> GetReadyOrders();
         Task<CookingApparatus> GetAvailableApparatus(KitchenFood food);
 
-        Task Prepare(KitchenFood food, CookingApparatus apparatus, Order order);
+        Task Prepare(KitchenFood food, CookingApparatus apparatus, Order order, Cook cook);
         Task<List<Food>> GetMenu();
         Task<KitchenFood> UpdateKitchenFoodState(KitchenFood food, Order order);
 
@@ -19,5 +19,6 @@ namespace Kitchen.Domain.Repository
         Task<List<Cook>> GetCooks();
         Task<CookingApparatus> UpdateApparatus(CookingApparatus apparatus);
         Task InitContext();
+        Task<List<Order>> GetNotReadyOrders();
     }
 }

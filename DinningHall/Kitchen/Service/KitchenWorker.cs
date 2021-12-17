@@ -11,20 +11,20 @@ namespace DinningHall.Service
 {
     public class KitchenWorker : BackgroundService
     {
-        private readonly IKitchenService _kitchenService;
+        private readonly ICookService _cookService;
 
         private readonly ILogger<KitchenWorker> logger;
 
-        public KitchenWorker(IKitchenService kitchenService, ILogger<KitchenWorker> logger)
+        public KitchenWorker(ICookService cookService, ILogger<KitchenWorker> logger)
         {
-            _kitchenService = kitchenService;
+            _cookService = cookService;
             this.logger = logger;
         }
 
         protected override async  Task ExecuteAsync(CancellationToken stoppingToken)
         {
             logger.LogInformation("$Worker running ");
-            await _kitchenService.StartWork(stoppingToken);
+            await _cookService.StartWork(stoppingToken);
         }
     }
 }
